@@ -1,0 +1,21 @@
+FROM python:3.13-slim
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+RUN chmod +x entrypoint.sh
+
+# Install NGINX and gettext (for envsubst)
+RUN apt-get update && \
+    apt-get install -y nginx gettext-base && \
+    apt-get clean
+
+# Expose NGINX's port
+EXPOSE 8051
+
+
+# Set the entrypoint
+ENTRYPOINT ["./entrypoint.sh"]
