@@ -14,7 +14,7 @@ RUN apt-get update && \
     apt-get clean
 
 # Expose NGINX's port
-EXPOSE 8051
+EXPOSE 8080
 
 
 # Set the entrypoint
