@@ -47,7 +47,7 @@ else:
         access_key=st.session_state.access_key,
         secret_key=st.session_state.secret_key,
         session_token=st.session_state.session_token,
-        secure=True
+        secure=os.getenv("MINIO_SECURE", "true").lower() == "true",
     )
 
     if st.session_state.content is None:
