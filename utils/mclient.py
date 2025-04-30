@@ -8,6 +8,7 @@ Project Info: https://stelar-project.eu/
 """
 
 from minio import Minio
+import streamlit as st
 import os
 
 class MinioClient:
@@ -49,6 +50,7 @@ class MinioClient:
             raise ValueError("Invalid path. Expected format 's3://bucket/object/name' or 'bucket/object/name'.")
         return parts[0], parts[1]
 
+    @st.cache_data
     def get_object(self, bucket_name=None, object_name=None, s3_path=None, local_path=None):
         """
         Retrieve an object.

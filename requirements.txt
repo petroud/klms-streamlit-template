@@ -1,2 +1,8 @@
 streamlit
+geopandas
+plotly
+folium
+streamlit-folium
+matplotlib
+statsmodels==0.14.1
 minio

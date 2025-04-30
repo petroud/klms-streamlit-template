@@ -1,9 +1,11 @@
 import streamlit as st
 import os
 from utils.mclient import MinioClient
+from utils.profile_functions import read_json_profile, profiler_visualization
 
-
-st.title("K8s-Launched Streamlit App")
+layout = "wide"
+page_title = "K8s-Launched Streamlit App"
+st.set_page_config(page_title=page_title, layout=layout)
 
 qparams = st.query_params
 
@@ -38,7 +40,9 @@ else:
     st.write("S3 Path:", st.session_state.s3_path)
 
     # Download the file from S3
-    local_path = os.path.join(os.getcwd(), "profile_data.json")
+    original_filename = os.path.basename(st.session_state.s3_path)
+
+    local_path = os.path.join(os.getcwd(), original_filename)
 
     mc = MinioClient(
         endpoint=st.session_state.s3_endpoint,
@@ -52,6 +56,6 @@ else:
 
     st.write("File downloaded successfully to:", local_path)
     # Display the content of the downloaded file
-    with open(local_path, "r") as file:
-        content = file.read()
-        st.text_area("Content of the downloaded file:", content, height=300)
+    content = read_json_profile(local_path)
+    profiler_visualization(content)
+
