@@ -4,7 +4,7 @@ from utils.mclient import MinioClient
 from utils.profile_functions import read_json_profile, profiler_visualization
 
 layout = "wide"
-page_title = "K8s-Launched Streamlit App"
+page_title = "Profile - Visualizer"
 st.set_page_config(page_title=page_title, layout=layout)
 
 qparams = st.query_params
@@ -29,19 +29,17 @@ s3_path = qparams.get("s3_path")
 if s3_path:
     st.session_state.s3_path = s3_path
 
+if 'content' not in st.session_state:
+    st.session_state.content = None
+else:
+    st.session_state.content = st.session_state.content
+
 # Check if all required credentials are provided
 if not (st.session_state.get("access_key") and st.session_state.get("secret_key") and st.session_state.get("s3_endpoint") and st.session_state.get("s3_path")):
     st.write("Credentials not provided")
 else:
-    st.write("Access Key:", st.session_state.access_key)
-    st.write("Secret Key:", st.session_state.secret_key)
-    st.write("Session Token:", st.session_state.session_token)
-    st.write("S3 Endpoint:", st.session_state.s3_endpoint)
-    st.write("S3 Path:", st.session_state.s3_path)
-
     # Download the file from S3
     original_filename = os.path.basename(st.session_state.s3_path)
-
     local_path = os.path.join(os.getcwd(), original_filename)
 
     mc = MinioClient(
@@ -52,10 +50,8 @@ else:
         secure=True
     )
 
-    mc.get_object(s3_path=st.session_state.s3_path, local_path=local_path)
+    if st.session_state.content is None:
+       print('Fetching file from MinIO...')
+       st.session_state.content = mc.get_object(s3_path=st.session_state.s3_path, local_path=local_path)
 
-    st.write("File downloaded successfully to:", local_path)
-    # Display the content of the downloaded file
-    content = read_json_profile(local_path)
-    profiler_visualization(content)
-
+    profiler_visualization(st.session_state.content)
