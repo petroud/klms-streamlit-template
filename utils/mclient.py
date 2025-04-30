@@ -11,6 +11,42 @@ from minio import Minio
 import streamlit as st
 import os
 
+def _download_from_s3(
+    endpoint: str,
+    access_key: str,
+    secret_key: str,
+    bucket_name: str,
+    object_name: str,
+    local_path: str | None = None,
+    secure: bool = True,
+    session_token: str | None = None,
+) -> bytes | dict:
+    """
+    Pure function—no self!—that Streamlit can cache. Returns bytes or success dict.
+    """
+    client = Minio(
+        endpoint,
+        access_key=access_key,
+        secret_key=secret_key,
+        secure=secure,
+        session_token=session_token,
+    )
+
+    response = client.get_object(bucket_name, object_name)
+    try:
+        if local_path:
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            with open(local_path, "wb") as f:
+                for chunk in response.stream(32 * 1024):
+                    f.write(chunk)
+            return {"message": f"Downloaded '{object_name}' → '{local_path}'"}
+        else:
+            return response.read()
+    finally:
+        response.close()
+        response.release_conn()
+
+
 class MinioClient:
     def __init__(self, endpoint, access_key, secret_key, secure=True, session_token=None):
         """
@@ -69,18 +105,17 @@ class MinioClient:
         elif not (bucket_name and object_name):
             raise ValueError("Bucket name and object name must be provided if s3_path is not used.")
 
-        response = self.client.get_object(bucket_name, object_name)
-        try:
-            if local_path:
-                with open(local_path, 'wb') as file_data:
-                    for d in response.stream(32 * 1024):
-                        file_data.write(d)
-                return {"message": f"Object '{object_name}' successfully downloaded to '{local_path}'."}
-            else:
-                return response.read()
-        finally:
-            response.close()
-            response.release_conn()
+        # Delegate to the pure, cacheable function:
+        return _download_from_s3(
+            endpoint=self.endpoint,
+            access_key=self.access_key,
+            secret_key=self.secret_key,
+            secure=self.secure,
+            session_token=self.session_token,
+            bucket_name=bucket_name,
+            object_name=object_name,
+            local_path=local_path,
+        )
 
     def put_object(self, bucket_name=None, object_name=None, s3_path=None, file_path=None, data=None, length=None):
         """
